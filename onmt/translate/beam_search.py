@@ -147,7 +147,7 @@ class BeamSearch(DecodeStrategy):
     def batch_offset(self):
         return self._batch_offset
 
-    def advance(self, log_probs, attn):
+    def advance(self, log_probs, attn, block_restaurant_idx):
         vocab_size = log_probs.size(-1)
 
         # using integer division to get an integer _B without casting
@@ -174,7 +174,7 @@ class BeamSearch(DecodeStrategy):
         curr_scores = log_probs / length_penalty
 
         # Avoid any direction that would repeat unwanted ngrams
-        self.block_ngram_repeats(curr_scores)
+        self.block_ngram_repeats(curr_scores, block_restaurant_idx)
 
         # Flatten probs into a list of possibilities.
         curr_scores = curr_scores.reshape(_B, self.beam_size * vocab_size)

@@ -112,7 +112,7 @@ class DecodeStrategy(object):
         if len(self) == self.max_length + 1:
             self.is_finished.fill_(1)
 
-    def block_ngram_repeats(self, log_probs):
+    def block_ngram_repeats(self, log_probs, block_restaurant_idx):
         """
         We prevent the beam from going in any direction that would repeat any
         ngram of size <block_ngram_repeat> more thant once.
@@ -137,6 +137,8 @@ class DecodeStrategy(object):
             return
 
         # we can't block nothing beam's too short
+        # TODO we'll leave this here in case it breaks anything but will remove
+        # later if it causes problems with allow restaurant to be a first word
         if len(self) < self.block_ngram_repeat:
             return
 
@@ -144,11 +146,11 @@ class DecodeStrategy(object):
         for path_idx in range(self.alive_seq.shape[0]):
             # we check paths one by one
 
-            current_ngram = tuple(self.alive_seq[path_idx, -n:].tolist())
-            forbidden_tokens = self.forbidden_tokens[path_idx].get(
-                current_ngram, None)
-            if forbidden_tokens is not None:
-                log_probs[path_idx, list(forbidden_tokens)] = -10e20
+            # current_ngram = tuple(self.alive_seq[path_idx, -n:].tolist())
+            # forbidden_tokens = self.forbidden_tokens[path_idx].get(
+            #     current_ngram, None)
+            if block_restaurant_idx is not None:
+                log_probs[path_idx, block_restaurant_idx] = -10e20
 
     def maybe_update_forbidden_tokens(self):
         """We complete and reorder the list of forbidden_tokens"""

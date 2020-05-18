@@ -632,6 +632,18 @@ class Translator(object):
         Returns:
             results (dict): The translation results.
         """
+
+        this_vocab = self.fields['src'].fields[0][1].vocab
+        restaurant_idx = this_vocab.stoi['restaurant']
+        src_idxs = [this[0] for this in batch.src[0][:, 0, :].tolist()]
+        # print(' '.join([this_vocab.itos[this] for this in src_idxs]))
+        # print(restaurant_idx in src_idxs)
+        if restaurant_idx in src_idxs:
+            block_restaurant_idx = None
+        else:
+            block_restaurant_idx = restaurant_idx
+        #     print(' '.join([this_vocab.itos[this] for this in src_idxs]))
+        #     import ipdb; ipdb.set_trace()
         # (0) Prep the components of the search.
         use_src_map = self.copy_attn
         parallel_paths = decode_strategy.parallel_paths  # beam_size
@@ -671,7 +683,7 @@ class Translator(object):
                 step=step,
                 batch_offset=decode_strategy.batch_offset)
 
-            decode_strategy.advance(log_probs, attn)
+            decode_strategy.advance(log_probs, attn, block_restaurant_idx)
             any_finished = decode_strategy.is_finished.any()
             if any_finished:
                 decode_strategy.update_finished()
